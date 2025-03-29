@@ -112,4 +112,52 @@ def test_for_count(
     module.block.append(fn_main)
 
     # note: not yet fully implemented
-    # check_result(action, builder, module, expected_file)
+    check_result(action, builder, module, expected_file)
+
+
+@pytest.mark.parametrize(
+    "action,expected_file",
+    [
+        ("build", ""),
+    ],
+)
+@pytest.mark.parametrize(
+    "builder_class",
+    [
+        LLVMLiteIR,
+    ],
+)
+def test_for_range_float(
+    action: str, expected_file: str, builder_class: Type[Builder]
+) -> None:
+    """Test For Range statement with float values."""
+    builder = builder_class()
+
+    var_a = astx.InlineVariableDeclaration(
+        "a", type_=astx.Float32(), value=astx.LiteralFloat32(-1.0)
+    )
+    start = astx.LiteralFloat32(1.0)
+    end = astx.LiteralFloat32(10.0)
+    step = astx.LiteralFloat32(0.5)
+    body = astx.Block()
+    body.append(astx.LiteralFloat32(2.0))
+    for_loop = astx.ForRangeLoopStmt(
+        variable=var_a,
+        start=start,
+        end=end,
+        step=step,
+        body=body,
+    )
+
+    proto = astx.FunctionPrototype(
+        name="main", args=astx.Arguments(), return_type=astx.Float32()
+    )
+    block = astx.Block()
+    block.append(for_loop)
+    block.append(astx.FunctionReturn(astx.LiteralFloat32(0.0)))
+    fn_main = astx.Function(prototype=proto, body=block)
+
+    module = builder.module()
+    module.block.append(fn_main)
+
+    check_result(action, builder, module, expected_file)
